@@ -31,6 +31,9 @@ classifiers = [
 ]
 dependencies = [
     "bokeh>=3.1.1",
+    "geopandas",
+    "numpy",
+    "scipy",
     "pandas",
     "openpyxl",
     "pathlib",

@@ -1,3 +1,23 @@
+# Ignore data files in the repository
+*.pkl
+*.geojson
+*.atx
+*.cpg
+*.CPG
+*.dbf
+*.prj
+*.README.html
+*.sbn
+*.sbx
+*.shp
+*.shx
+*.sas7bdat
+*.txt
+*.TXT
+*.VERSION.txt
+*.xml
+*.zip
+
 # Ignore Python bytecode files and other common build artifacts
 *.pyc
 MANIFEST

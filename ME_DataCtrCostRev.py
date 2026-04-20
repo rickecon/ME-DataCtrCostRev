@@ -16,7 +16,9 @@ from scipy.optimize import root_scalar
 from bokeh.io import output_file
 from bokeh.plotting import figure, show
 from bokeh.palettes import Reds9
-from bokeh.models import GeoJSONDataSource, HoverTool, ColumnDataSource, Legend, LegendItem
+from bokeh.models import (
+    GeoJSONDataSource, HoverTool, ColumnDataSource, Legend, LegendItem, Title
+)
 
 
 def make_me_elec_fmv_plot():
@@ -142,9 +144,11 @@ def make_me_elec_fmv_plot():
         df_samp["electrical_capacity_mw_public"].max(),
         500
     )
+    elec_capac_vec_gtcut = elec_capac_vec[elec_capac_vec >= ElecCapacCutoff]
     elec_capac_vec_lecut = elec_capac_vec[elec_capac_vec <= ElecCapacCutoff]
-    FMV_pred_lin = a_lin * elec_capac_vec + b_lin
-    FMV_pred_exp1 = np.exp(a_exp1 * elec_capac_vec_lecut) + c_exp1
+    FMV_pred_lin = a_lin * elec_capac_vec_gtcut + b_lin
+    FMV_pred_lin_lecut = a_lin * elec_capac_vec_lecut + b_lin
+    # FMV_pred_exp1 = np.exp(a_exp1 * elec_capac_vec_lecut) + c_exp1
     FMV_pred_exp2 = np.exp(a_exp2 * elec_capac_vec_lecut + b_exp2) + c_exp2
 
     # -------------------------------------------------------------------------
@@ -186,17 +190,25 @@ def make_me_elec_fmv_plot():
         legend_label="Data Centers"
     )
     fig1.line(
-        x=elec_capac_vec,
+        x=elec_capac_vec_gtcut,
         y=FMV_pred_lin,
         line_width=2,
         color="blue",
         legend_label="Linear Fit"
     )
+    fig1.line(
+        x=elec_capac_vec_lecut,
+        y=FMV_pred_lin_lecut,
+        line_width=2,
+        color="blue",
+        line_dash="dashed",
+        legend_label="Linear Fit (for <= 95 MW)"
+    )
     # fig1.line(
     #     x=elec_capac_vec_lecut,
     #     y=FMV_pred_exp1,
     #     line_width=2,
-    #     color="red",
+    #     color="orange",
     #     legend_label="Exponential Fit 1 (for <= 95 MW)"
     # )
     fig1.line(
@@ -218,6 +230,35 @@ def make_me_elec_fmv_plot():
     ]
     fig1.add_tools(hover)
     fig1.legend.location = "top_left"
+    fig1.add_layout(fig1.legend[0], 'center')
+
+    note_text_list1 = [
+        (
+            'Source: Richard W. Evans (@RickEcon), updated Apr. 20, 2026. ' +
+            'Electrical capacity and fair market'
+        ),
+        (
+            '    value data come from an individual search. The data in ' +
+            'this figure with sources are available in the'
+        ),
+        (
+            '    data/us_data_centers_FMV.xlsx file in the ' +
+            'https://github.com/OpenSourceEcon/ME-DataCtrCostRev'
+        ),
+        (
+            '    GitHub repository.'
+        )
+    ]
+
+
+    for note_text in note_text_list1:
+        caption1 = Title(
+            text=note_text, align='left', text_font_size='9pt',
+            text_font_style='italic',
+            text_color='black',
+            standoff=0
+        )
+        fig1.add_layout(caption1, 'below')
 
     show(fig1)
 
@@ -414,6 +455,9 @@ def make_me_datactrcostrevmap(
 
     # -------------------------------------------------------------------------
     # Merge property tax rates into counties GDF and assign Reds9 colors
+    # Data are available at "https://www.maine.gov/revenue/sites/" +
+    # "maine.gov.revenue/files/inline-files/" +
+    # "2024%20FULL%20VALUE%20TAX%20RATES%20HISTORY%20with%20percentage%20increases.xls
     # -------------------------------------------------------------------------
     tax_df = pd.read_csv(
         os.path.join(data_dir, "ME_FullValuePropTaxRates_cnty_2024.csv"),
@@ -446,8 +490,8 @@ def make_me_datactrcostrevmap(
     # Make figure
     # -------------------------------------------------------------------------
     fig2_title = (
-        "Figure 2. Maine map of full value property tax rates (mill rates) " +
-        "by county"
+        "Figure 2. Maine map of 2024 full value property tax rates (mill " +
+        "rates) by county"
     )
 
     # fig2_title = ""
@@ -462,7 +506,7 @@ def make_me_datactrcostrevmap(
     fig2 = figure(
         title=fig2_title,
         height=700,
-        width=650,
+        width=600,
         tools=TOOLS,
         min_border = 0,
         x_axis_location = None, y_axis_location = None,
@@ -543,9 +587,31 @@ def make_me_datactrcostrevmap(
     ]
     fig2.add_tools(hover2)
 
+    note_text_list2 = [
+        (
+            'Source: Richard W. Evans (@RickEcon), updated Apr. 20, 2026. ' +
+            'Full value property tax rates are computed and'
+        ),
+        (
+            '    published by the Maine Revenue Service and are available ' +
+            'on the MRS website and in the data directory of'
+        ),
+        (
+            '    the GitHub repository for this analysis.'
+        )
+    ]
+    for note_text in note_text_list2:
+        caption2 = Title(
+            text=note_text, align='left', text_font_size='9pt',
+            text_font_style='italic',
+            text_color='black',
+            standoff=0
+        )
+        fig2.add_layout(caption2, 'below')
+
     show(fig2)
 
 
 if __name__ == "__main__":
-    make_me_elec_fmv_plot()
-    # make_me_datactrcostrevmap(create_data=True, save_data=True)
+    # make_me_elec_fmv_plot()
+    make_me_datactrcostrevmap(create_data=True, save_data=True)

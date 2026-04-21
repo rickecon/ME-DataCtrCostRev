@@ -263,6 +263,91 @@ def make_me_elec_fmv_plot():
     show(fig1)
 
 
+def elec_fmv_proptax_func(
+    elec_capac: int | float = 100,
+    tax_exempt_pct: int | float = 0.0,
+    county: str = "Cumberland",
+    print: bool = False
+):
+    # Set hard coded fair market value (FMV) function parameters
+    a_lin = 0.010018082083149032
+    b_lin = -0.3496020387036265
+    a_exp = 0.010396604326045984
+    b_exp = -1.0247649882273389
+    c_exp = -0.36147598374031675
+    ElecCapacCutoff = 95
+    # Make sure elec_capac is a scalar within the range 0.5 to 2200 MW
+    if elec_capac < 0.5 or elec_capac > 2200:
+        raise ValueError(
+            "ERROR elec_fmv_proptax_func(): elec_capac must be between 0.5 " +
+            "and 2200 MW"
+        )
+    # Make sure tax_exempt_pct is between 0 and 1
+    if tax_exempt_pct < 0 or tax_exempt_pct > 1:
+        raise ValueError(
+            "ERROR elec_fmv_proptax_func(): tax_exempt_pct must be between " +
+            "0 and 1"
+        )
+    # Create proptax_rate_2024_dict dictionary that uses the
+    # ME_FullValuePropTaxRates_cnty_2024.csv file in the data directory to map
+    # each Maine county to its 2024 full value property tax rate
+    # (proptax_rate_2024)
+    # proptax_rate_2024_dict = pd.read_csv(
+    #     os.path.join(
+    #         Path(__file__).resolve().parent, "data",
+    #         "ME_FullValuePropTaxRates_cnty_2024.csv"
+    #     ),
+    #     skiprows=2
+    # ).dropna(
+    #     subset=["county"]
+    # ).set_index("county")["proptax_pct_2024"].to_dict()
+    proptax_rate_2024_dict = {
+        "Androscoggin": 0.01285,
+        "Aroostook": 0.01596,
+        "Cumberland": 0.01062,
+        "Franklin": 0.00859,
+        "Hancock": 0.00839,
+        "Kennebec": 0.01107,
+        "Knox": 0.01058,
+        "Lincoln": 0.00753,
+        "Oxford": 0.0094,
+        "Penobscot": 0.0138,
+        "Piscataquis": 0.01004,
+        "Sagadahoc": 0.01035,
+        "Somerset": 0.01185,
+        "Waldo": 0.01137,
+        "Washington": 0.01188,
+        "York": 0.00876
+    }
+    # Make sure that the county string is one of the 16 Maine counties
+    maine_counties = list(proptax_rate_2024_dict.keys())
+    if county not in maine_counties:
+        raise ValueError(
+            "ERROR elec_fmv_proptax_func(): county must be one of the " +
+            f"following: {', '.join(maine_counties)}"
+        )
+    # Compute the fair market value (FMV)
+    if elec_capac >= ElecCapacCutoff:
+        fmv = a_lin * elec_capac + b_lin
+    else:
+        fmv = np.exp(a_exp * elec_capac + b_exp) + c_exp
+    # Calculate the annual property tax revenue for a data center with the
+    # given electrical capacity, tax exeption percentage, and county.
+    proptax_rate = proptax_rate_2024_dict[county]
+    proptax_revenue = fmv * proptax_rate * (1 - tax_exempt_pct)
+    if print:
+        print(f"Electrical Capacity (MW): {elec_capac}")
+        print(f"Fair Market Value (Billions USD): {fmv:.3f}")
+        print(f"Property Tax Rate: {proptax_rate:.5%}")
+        print(f"Tax Exemption Percentage: {tax_exempt_pct:.2%}")
+        print(
+            "Annual Property Tax Revenue " +
+            f"(Billions USD): {proptax_revenue:.3f}"
+        )
+
+    return fmv, proptax_revenue
+
+
 def make_me_datactrcostrevmap(
     create_data=False, save_data=True
 ):

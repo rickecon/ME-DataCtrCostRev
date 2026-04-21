@@ -267,7 +267,7 @@ def elec_fmv_proptax_func(
     elec_capac: int | float = 100,
     tax_exempt_pct: int | float = 0.0,
     county: str = "Cumberland",
-    print: bool = False
+    print_out: bool = False
 ):
     # Set hard coded fair market value (FMV) function parameters
     a_lin = 0.010018082083149032
@@ -276,10 +276,10 @@ def elec_fmv_proptax_func(
     b_exp = -1.0247649882273389
     c_exp = -0.36147598374031675
     ElecCapacCutoff = 95
-    # Make sure elec_capac is a scalar within the range 0.5 to 2200 MW
-    if elec_capac < 0.5 or elec_capac > 2200:
+    # Make sure elec_capac is a scalar within the range 0.9 to 2200 MW
+    if elec_capac < 0.9 or elec_capac > 2200:
         raise ValueError(
-            "ERROR elec_fmv_proptax_func(): elec_capac must be between 0.5 " +
+            "ERROR elec_fmv_proptax_func(): elec_capac must be between 0.9 " +
             "and 2200 MW"
         )
     # Make sure tax_exempt_pct is between 0 and 1
@@ -335,17 +335,16 @@ def elec_fmv_proptax_func(
     # given electrical capacity, tax exeption percentage, and county.
     proptax_rate = proptax_rate_2024_dict[county]
     proptax_revenue = fmv * proptax_rate * (1 - tax_exempt_pct)
-    if print:
+    if print_out:
         print(f"Electrical Capacity (MW): {elec_capac}")
-        print(f"Fair Market Value (Billions USD): {fmv:.3f}")
-        print(f"Property Tax Rate: {proptax_rate:.5%}")
-        print(f"Tax Exemption Percentage: {tax_exempt_pct:.2%}")
+        print(f"Fair Market Value: ${fmv*1e9:,.0f}")
+        print(f"Property Tax Rate: {proptax_rate:.3%}")
+        print(f"Tax Exemption Percentage: {tax_exempt_pct:.1%}")
         print(
-            "Annual Property Tax Revenue " +
-            f"(Billions USD): {proptax_revenue:.3f}"
+            f"Annual Property Tax Revenue: ${proptax_revenue*1e9:,.0f}"
         )
 
-    return fmv, proptax_revenue
+    return float(fmv), proptax_rate, float(proptax_revenue)
 
 
 def make_me_datactrcostrevmap(
